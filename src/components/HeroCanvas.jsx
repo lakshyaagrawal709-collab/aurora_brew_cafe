@@ -7,20 +7,26 @@ const HeroCanvas = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
     let animationFrameId;
 
     const resize = () => {
-      canvas.width = canvas.parentElement.clientWidth;
-      canvas.height = canvas.parentElement.clientHeight;
+      if (!canvas) return;
+      const parent = canvas.parentElement;
+      canvas.width = parent ? parent.clientWidth : window.innerWidth;
+      canvas.height = parent ? parent.clientHeight : window.innerHeight;
     };
     resize();
     window.addEventListener('resize', resize);
 
     // Particle system for floating coffee beans & steam dust
-    const beans = Array.from({ length: 28 }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      radius: Math.random() * 7 + 4,
+    const width = canvas.width || 800;
+    const height = canvas.height || 600;
+
+    const beans = Array.from({ length: 24 }, () => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      radius: Math.random() * 6 + 4,
       rotation: Math.random() * Math.PI * 2,
       rotSpeed: (Math.random() - 0.5) * 0.02,
       vx: (Math.random() - 0.5) * 0.3,
@@ -28,18 +34,19 @@ const HeroCanvas = () => {
       alpha: Math.random() * 0.4 + 0.2
     }));
 
-    const steam = Array.from({ length: 45 }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      size: Math.random() * 25 + 10,
+    const steam = Array.from({ length: 30 }, () => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      size: Math.random() * 20 + 8,
       vx: (Math.random() - 0.5) * 0.2,
-      vy: -Math.random() * 0.6 - 0.2,
-      alpha: Math.random() * 0.12 + 0.03
+      vy: -Math.random() * 0.5 - 0.1,
+      alpha: Math.random() * 0.1 + 0.02
     }));
 
-    let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+    let mouse = { x: width / 2, y: height / 2 };
 
     const handleMouseMove = (e) => {
+      if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
       mouse.x = e.clientX - rect.left;
       mouse.y = e.clientY - rect.top;
@@ -47,9 +54,10 @@ const HeroCanvas = () => {
     window.addEventListener('mousemove', handleMouseMove);
 
     const render = () => {
+      if (!canvas || !ctx) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw steam particles (soft blurred circles)
+      // Draw steam particles
       steam.forEach(p => {
         p.y += p.vy;
         p.x += p.vx + Math.sin(p.y * 0.01) * 0.2;
@@ -73,11 +81,10 @@ const HeroCanvas = () => {
         b.x += b.vx;
         b.rotation += b.rotSpeed;
 
-        // Subtle mouse push effect
         const dx = mouse.x - b.x;
         const dy = mouse.y - b.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 120) {
+        if (dist < 120 && dist > 0) {
           b.x -= (dx / dist) * 0.8;
           b.y -= (dy / dist) * 0.8;
         }
@@ -92,13 +99,11 @@ const HeroCanvas = () => {
         ctx.rotate(b.rotation);
         ctx.globalAlpha = b.alpha;
 
-        // Bean outer oval
         ctx.fillStyle = '#3d2319';
         ctx.beginPath();
         ctx.ellipse(0, 0, b.radius * 1.3, b.radius * 0.85, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Inner bean seam line
         ctx.strokeStyle = '#c9a687';
         ctx.lineWidth = 1.2;
         ctx.beginPath();
@@ -117,7 +122,7 @@ const HeroCanvas = () => {
     return () => {
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', handleMouseMove);
-      cancelAnimationFrame(animationFrameId);
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
     };
   }, []);
 
