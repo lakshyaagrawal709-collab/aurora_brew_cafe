@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: '/aurora_brew_cafe/', // Matching GitHub Pages repository subpath
+  base: './', // Universal relative base path for GitHub Pages root and gh-pages branch
   server: {
     port: 3000,
     open: true
